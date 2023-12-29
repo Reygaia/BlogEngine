@@ -1,0 +1,24 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <a href="Identity/Account/Login">Login</a>
+    <a href="Identity/Account/Logout">Logout</a>
+    <a href="Identity/Account/Register">Register</a>
+    @if(User.Identity.IsAuthenticated)
+    {
+        @User.Identity.Name;
+        @User.Identity;
+    }
+    else
+    {
+        <p>Please Log in</p>
+    }
+</div>
+
+
