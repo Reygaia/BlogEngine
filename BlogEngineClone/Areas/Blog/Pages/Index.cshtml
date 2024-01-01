@@ -1,0 +1,19 @@
+﻿@page
+@model BlogEngineClone.Areas.Blog.Pages.IndexModel
+@{
+}
+
+<p>
+    @if (User.Identity.IsAuthenticated)
+    {
+    <p>@User.Identity.Name</p>
+    }
+    else
+    {
+    <a href="/Identity/Account/Login">
+        Please log in
+    </a>
+    }
+
+
+<p />

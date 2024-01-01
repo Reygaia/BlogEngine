@@ -17,6 +17,9 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using NuGet.Protocol;
 using Newtonsoft.Json.Linq;
+using Azure.Identity;
+using BlogEngineClone.Data;
+using Microsoft.Identity.Client;
 
 namespace BlogEngineClone.Controller.Api
 {
@@ -30,6 +33,7 @@ namespace BlogEngineClone.Controller.Api
         private readonly UserManager<BlogEngineCloneUser> _usermanager;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly BlogEngineCloneContext _dbcontext;
 
         private readonly string datafilepath = "FollowData.json";
         private Dictionary<string, HashSet<string>> FollowData;
@@ -39,7 +43,8 @@ namespace BlogEngineClone.Controller.Api
                               IHttpContextAccessor contextAccessor,
                               UserManager<BlogEngineCloneUser> usermanager,
                               IConfiguration configuration,
-                              IHttpClientFactory httpClientFactory) 
+                              IHttpClientFactory httpClientFactory,
+                              BlogEngineCloneContext blogEngineCloneContext) 
         {
             _logger = logger;
             _signInManager = signinmanager;
@@ -47,6 +52,46 @@ namespace BlogEngineClone.Controller.Api
             _usermanager = usermanager;
             _configuration = configuration;
             _httpClientFactory = httpClientFactory;
+            _dbcontext = blogEngineCloneContext;
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [Route("Login")]
+        public IActionResult Login([FromBody] LoginModel.InputModel Request)
+        {
+            var testuser = FindUserFromDBContext(Request);
+
+            if (testuser != null)
+            {
+                var tokenUser = AuthenticateToken(testuser);
+
+                var userInfo = new { UserID = testuser.Id, UserName = testuser.name, UserEmaail = testuser.Email, UserToken = tokenUser };
+
+                var jsonResult = JsonConvert.SerializeObject(userInfo);
+
+
+                //var jsonResult = JsonConvert.SerializeObject(userInfo, new JsonSerializerSettings
+                //{
+                //    ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+                //});
+                return new JsonResult(userInfo);
+
+
+            }
+
+            return BadRequest("Can't find User");
+        }
+
+        private BlogEngineCloneUser FindUserFromDBContext(LoginModel.InputModel User)
+        {
+            var findUser = _dbcontext.Users.FirstOrDefault(s => s.Email == User.Email);
+
+            if (findUser != null)
+            {
+                return findUser;
+            }
+            else return null;
         }
 
         [HttpPost]
@@ -56,8 +101,10 @@ namespace BlogEngineClone.Controller.Api
         {
             var context = _contextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
 
-            var result = AuthenticateToken();
+            BlogEngineCloneUser usertest = new BlogEngineCloneUser();
 
+            var result = AuthenticateToken(usertest);
+            
             var user = await _usermanager.FindByEmailAsync(Request.Email);
 
             if(!string.IsNullOrEmpty(result))
@@ -74,22 +121,48 @@ namespace BlogEngineClone.Controller.Api
             return Ok();
             
         }
-        private string AuthenticateToken()
+        private string AuthenticateToken(BlogEngineCloneUser user)
         {
-            var user = _contextAccessor.HttpContext.User.Identity as ClaimsIdentity;
 
-            if (user.IsAuthenticated)
+            if(user != null)
             {
-                var userToken = Token(user).ToJson();
-                
-                var jsonObject = JObject.Parse(userToken);
+                var claims = GetClaims(user.Id);
 
-                var TokenResult = jsonObject["Value"]?.ToString();
+                var token = GenerateToken(claims);
 
-                return TokenResult;
+                return token;
             }
 
+            //if (user)
+            //{
+            //    var userToken = Token(user).ToJson();
+
+
+
+                
+            //    var jsonObject = JObject.Parse(userToken);
+
+            //    var TokenResult = jsonObject["Value"]?.ToString();
+
+            //    return TokenResult;
+            //}
+
             return string.Empty;
+        }
+
+        private List<Claim> GetClaims(string userid)
+        {
+           var userclaim =  _usermanager.FindByIdAsync(userid).Result;
+
+           if(userclaim!=null)
+           {
+                var claims =  _usermanager.GetClaimsAsync(userclaim).Result;
+                
+                var listclaim = claims.ToList();
+
+                return listclaim;
+           }
+           return new List<Claim>();
         }
 
 
@@ -128,6 +201,22 @@ namespace BlogEngineClone.Controller.Api
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         public async Task<IActionResult> GetUserAsync(string userid)
@@ -177,7 +266,31 @@ namespace BlogEngineClone.Controller.Api
             });
         }
 
-      
+
+        [HttpPost]
+        [Route("LoadUser/{userID}")]
+        public async Task<IActionResult> LoadUserWall([FromBody] string WallID)
+        {
+            var context =  _contextAccessor.HttpContext.User.Identity;
+
+            var idstring = Convert.ToString(WallID);
+
+            var list = _dbcontext.Users.ToList();
+
+            var user = list.Where(s => s.Id == idstring).FirstOrDefault();
+
+            //var checker = await _usermanager.IsInRoleAsync(user, "Blogger");
+
+            //if (checker)
+            //{
+                return new JsonResult(new
+                {
+                    userID = user.Id,
+                    userName = user.UserName,
+                });
+            //}
+            return Ok();
+        }
 
 
 

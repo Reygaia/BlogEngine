@@ -1,0 +1,111 @@
+﻿@page
+@model BlogEngineClone.Areas.Blog.Pages.UserProfileModel
+@{
+}
+
+<div>
+    @*
+        if followed show unfollow button 
+        cai nay la dung api kiem tra file json de co follow hay khong
+        vi database no k co luu duoc dang list
+        logic thi kiem user trong database
+        neu co thi tra r roi kiem trong file json co hay khong
+    *@
+    <button id="follow">
+    </button>
+
+    @*
+        duoi day la them chuc nang load cai bai viet cua blogger da dang roi het roi con muon them gi thi tinh sau
+    *@
+</div>
+
+<div>
+    <button id="loaddata" data-wall-id="f89db200-0129-4503-aa97-78557214cc1f" >
+        <span>
+            click me to load
+        </span>
+    </button>
+    <p id="userDataContainer">
+
+    </p>
+</div>
+
+<div>
+    
+    @foreach(var item in Model._context.Users.ToList()){
+        <div style="margin-top: 20px">
+            <p>@item.name</p>
+            <p>@item.Email</p>
+            <p>@item.Id</p>
+            <button class="loaddata" data-wall-id="@item.Id">
+                <span>
+                    Test
+                </span>
+                <p class="userDataContainer">
+
+                </p>
+            </button>
+        </div>
+    }
+</div>
+
+
+<script>
+    // LoadFollowButton()
+
+    // LoadUser();
+
+    // baseapiurl = "https://localhost:7234"
+    // apiendpoint = "/api/User/CheckFollow"
+
+    // LoadPosts()
+
+    //     baseapiurl = "https://localhost:7234"
+    //     apiendpoint = "/api/User/LoadUser"
+
+    const buttons = document.getElementsByClassName('loaddata');
+
+    for (const button of buttons) {
+        button.addEventListener('click', function () {
+            const wallId = this.getAttribute('data-wall-id');
+            console.log('Wall ID:', wallId);
+
+            fetch(`https://localhost:7234/api/User/LoadUser/${wallId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(wallId)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response:', data);
+
+                    // Check if data is defined and contains expected properties
+                    if (data && data.hasOwnProperty('userID') && data.hasOwnProperty('userName')) {
+                        // Generate HTML string
+                        const htmlString = `<p>Call Successful. User name is: ${data.userName}</p>`;
+
+                        // Update the HTML content for the specific userDataContainer associated with the clicked button
+                        const userDataContainer = this.querySelector('.userDataContainer');
+                        userDataContainer.innerHTML = htmlString;
+                    } else {
+                        console.error('Invalid response format:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+    }
+        
+
+
+    
+</script>
+

@@ -20,9 +20,16 @@ using System.Text.Json.Serialization;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using NuGet.Common;
+using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace BlogEngineClone.Areas.Identity.Pages.Account
 {
+
     public class LoginModel : PageModel
     {
         private readonly SignInManager<BlogEngineCloneUser> _signInManager;
@@ -136,16 +143,26 @@ namespace BlogEngineClone.Areas.Identity.Pages.Account
                 {
                     _logger.LogInformation("User logged in.");
 
-                    var apiurl = "api/User/Token";
+                    var token = await GetUserInfo();
 
-                    //var gettoken = await OnPostAsync(apiurl);
+                    var userobject = JObject.Parse(token);
 
-                    //var user = await _usermanager.FindByEmailAsync(Input.Email);
-                    //var token = GenerateJwtToken(user);
 
-                    ////return new JsonResult(new { Token = token } );
+                    var UserID = userobject["userID"].ToString();
+                    var UserName = userobject["userName"].ToString();
+                    var UserEmail = userobject["userEmaail"].ToString();
+                    var UserToken = userobject["userToken"].ToString();
+                    
 
-                    //int x = 1;
+                    //return new JsonResult(new
+                    //{
+                    //    userID = UserID,
+                    //    userName = UserName,
+                    //    userEmaail = UserEmail,
+                    //    userToken = UserToken
+                    //});
+
+                    int x = 1;
 
                     return LocalRedirect(returnUrl);
                 }
@@ -172,41 +189,37 @@ namespace BlogEngineClone.Areas.Identity.Pages.Account
             return Page();
         }
 
-        private string GenerateJwtToken(BlogEngineCloneUser UserToken)
+        private async Task<string> GetUserInfo()
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration["JWT:Secret"]);
-            var user = HttpContext.User;
-            var userid = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            var apiBaseUrl = _configuration["ApiBaseUrl"];
 
-            var usernameidentifier = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var username = user.FindFirst(ClaimTypes.Name)?.Value;
-            var userrole = user.FindFirst(ClaimTypes.Role)?.Value;
-            var useremail = user.FindFirst(ClaimTypes.Email)?.Value;
+            var apiEndPoint = "/api/User/Login";
 
+            var apiFullPath = $"{apiBaseUrl}{apiEndPoint}";
 
-            var tokenDescriptor = new SecurityTokenDescriptor
+            var inputmodel = this.Input;
+
+            using (var httpClient = new HttpClient())
             {
+                var content = new StringContent(JsonConvert.SerializeObject(inputmodel), Encoding.UTF8, "application/json");
+                var response = await httpClient.PostAsync(apiFullPath, content);
 
-               
-
-            Subject = new ClaimsIdentity(new[]
+                if (response.IsSuccessStatusCode)
                 {
-                new Claim(ClaimTypes.NameIdentifier, usernameidentifier),
-                new Claim(ClaimTypes.Email, useremail),
-                new Claim(ClaimTypes.Name,username),
-                new Claim(ClaimTypes.Role, userrole)
+                    var tokenResponse = await response.Content.ReadAsStringAsync();
 
-            // Add other claims as needed
-                }),
-                Expires = DateTime.Now.AddHours(Convert.ToDouble(_configuration["JWT:ExpirationHours"])), // Set expiration time
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
+                    return tokenResponse;
+
+                }
+                else
+                {
+                    // Handle API error
+                    return null;
+                }
+            }
+
         }
-
 
     }
 }
