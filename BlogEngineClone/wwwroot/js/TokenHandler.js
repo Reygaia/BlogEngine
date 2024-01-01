@@ -7,13 +7,6 @@ class Logindata {
     }
 };
 
-function testAPI() {
-    fetch('~/Identity/Account/Login', {
-        method: 'POST'
-    })
-    
-}
-
 function GetLoginData() {
     const EmailSignin = document.getElementById('EmailSignin').Value;
     const PasswordSignin = document.getElementById('PasswordSignin').Value;

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.CodeAnalysis.Scripting;
+using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualBasic;
 using System.IdentityModel.Tokens.Jwt;
@@ -58,9 +60,11 @@ namespace BlogEngineClone.Pages
 
                 var token = this.getToken(authClaims);
 
-                //var tokenline = new JwtSecurityTokenHandler().WriteToken(token);
+                var usertoken = await GetUserAsync(userid);
 
-                //Console.WriteLine(tokenline);
+                var tokenline = new JwtSecurityTokenHandler().WriteToken(token);
+
+                Console.WriteLine(tokenline);
 
 
             }
@@ -76,16 +80,25 @@ namespace BlogEngineClone.Pages
 
             var httpclient = _httpClientFactory.CreateClient();
 
-            var accesstoken = await HttpContext.GetTokenAsync("access_token");
+            var accesstoken = await HttpContext.GetTokenAsync("accesstoken");
             httpclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accesstoken);
             Console.WriteLine(accesstoken);
 
             var apiUrl = $"{apiBaseUrl}{apiEndPoint}?userId={userid}";
 
-            var response = await httpclient.GetAsync(apiUrl);
+            //var response = await httpclient.GetAsync(apiUrl);
+
+            HttpContent content = new StringContent("123");
+
+            var response = await httpclient.PostAsync(apiUrl,content);
 
             if (response.IsSuccessStatusCode)
             {
+                var usertoken = await GetUserAsync(userid);
+                return new JsonResult(new
+                {
+                    Token = usertoken
+                });
                 return RedirectToPage("/Identity/Account/Logout");
             }
 
@@ -99,7 +112,7 @@ namespace BlogEngineClone.Pages
             var token = new JwtSecurityToken(
             issuer: _configuration["JWT:ValidIssuer"],
             audience: _configuration["JWT:ValidAudience"],
-            expires: DateTime.Now.AddDays(2),
+            expires: DateTime.UtcNow.AddHours(Convert.ToDouble(48)),
             claims: authClaims,
             signingCredentials: new SigningCredentials(authSignInKey, SecurityAlgorithms.HmacSha256)
             );
@@ -107,5 +120,10 @@ namespace BlogEngineClone.Pages
             return token;
         }
 
+
+
     }
 }
+
+
+

@@ -136,12 +136,16 @@ namespace BlogEngineClone.Areas.Identity.Pages.Account
                 {
                     _logger.LogInformation("User logged in.");
 
-                    var user = await _usermanager.FindByEmailAsync(Input.Email);
-                    var token = GenerateJwtToken(user);
+                    var apiurl = "api/User/Token";
 
-                    return new JsonResult(new { Token = token, RedirectToPage("Index") } );
+                    //var gettoken = await OnPostAsync(apiurl);
 
-                    int x = 1;
+                    //var user = await _usermanager.FindByEmailAsync(Input.Email);
+                    //var token = GenerateJwtToken(user);
+
+                    ////return new JsonResult(new { Token = token } );
+
+                    //int x = 1;
 
                     return LocalRedirect(returnUrl);
                 }

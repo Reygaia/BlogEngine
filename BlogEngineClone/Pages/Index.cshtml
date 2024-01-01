@@ -34,6 +34,34 @@
     {
         <p>Please Log in</p>
     }
+    <p id="paragraph">
+
+    </p>
+    <p id="token">
+
+    </p>
 </div>
+
+<script>
+    testAPI(); //call function in view
+    //api controller define methods in Iactionresult as return and return Ok returns value in json
+    async function testAPI() {
+        const response = await fetch('/api/User/Current'); // call method in API in async
+        const data = await response.json(); //convert data return from method in api control
+        console.log(data); //return the value to console
+        var htmlstring = "123456";
+        var paragraph = document.getElementById("paragraph");
+        paragraph.innerHTML += htmlstring;
+
+
+    }
+    
+
+
+
+
+
+
+</script>
 
 

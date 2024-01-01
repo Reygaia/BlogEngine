@@ -42,10 +42,10 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequiredUniqueChars = 0;
     options.Password.RequireUppercase = false;
     options.Password.RequiredLength = 3;
-});
+}); 
 
 // Add services to the container.
-builder.Services.AddRazorPages();
+builder.Services.AddMvc();
 
 //builder.Services.AddAuthentication();
 
@@ -53,7 +53,7 @@ Microsoft.Extensions.Configuration.ConfigurationManager configuration = builder.
 
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    //options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 })
@@ -65,11 +65,15 @@ builder.Services.AddAuthentication(options =>
     {
         ValidateIssuer = true,
         ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
         ValidIssuer = configuration["JWT:ValidIssuer"],
         ValidAudience = configuration["JWT:ValidAudience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]))
     };
 });
+
+builder.Services.AddRazorPages();
 
 
 
@@ -218,6 +222,8 @@ using (var scope = app.Services.CreateScope())
     app.UseStaticFiles();
 
     app.UseRouting();
+
+    app.UseHttpsRedirection();
 
     app.UseAuthentication();
 
