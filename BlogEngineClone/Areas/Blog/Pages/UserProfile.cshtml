@@ -39,6 +39,7 @@
     
     @foreach(var item in Model._context.Users.ToList()){
         <div style="margin-top: 20px">
+
             <p>@item.name</p>
             <p>@item.Email</p>
             <p>@item.Id</p>
@@ -111,8 +112,8 @@
 
 
     function toggleFollow() {
-        var userId = "user1"; // Replace with the actual user ID
-        var targetId = "user2"; // Replace with the actual target user ID
+        var userId = "@currentUserId"; // Replace with the actual user ID
+        var targetId = "@targetfollowID"; // Replace with the actual target user ID
 
         // Make an AJAX request to the server
         $.ajax({

@@ -59,8 +59,10 @@ namespace BlogEngineClone.Controller.Api
         [HttpPost]
         [AllowAnonymous]
         [Route("Login")]
-        public IActionResult Login([FromBody] LoginModel.InputModel Request)
+        public async Task<IActionResult> Login([FromBody] LoginModel.InputModel Request)
         {
+            var result = await _signInManager.PasswordSignInAsync(Request.Email, Request.Password, Request.RememberMe, lockoutOnFailure: false);
+
             var testuser = FindUserFromDBContext(Request);
 
             if (testuser != null)
@@ -69,7 +71,7 @@ namespace BlogEngineClone.Controller.Api
 
                 var userInfo = new { UserID = testuser.Id, UserName = testuser.name, UserEmaail = testuser.Email, UserToken = tokenUser };
 
-                var jsonResult = JsonConvert.SerializeObject(userInfo);
+                return Ok(new {Token = tokenUser});
 
 
                 //var jsonResult = JsonConvert.SerializeObject(userInfo, new JsonSerializerSettings
@@ -252,6 +254,13 @@ namespace BlogEngineClone.Controller.Api
             return Ok();
         }
 
+
+
+
+
+
+
+
         //[HttpGet]
         //[Route("Protected")]
         //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -292,9 +301,6 @@ namespace BlogEngineClone.Controller.Api
             //}
             return Ok();
         }
-
-
-
         [HttpPost]
         [Route("FollowBtn/{TargetID}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -310,11 +316,6 @@ namespace BlogEngineClone.Controller.Api
                 message = message1
             });
         }
-
-
-
-
-
         [HttpPost]
         [Route("Follow")]
         public IActionResult FollowUser([FromBody] FollowRequest request)

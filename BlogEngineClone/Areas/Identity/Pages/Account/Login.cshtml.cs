@@ -21,11 +21,13 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using NuGet.Common;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Net.Http;
+using System.Text.Json;
+using System.Text;
 
 namespace BlogEngineClone.Areas.Identity.Pages.Account
 {
@@ -36,17 +38,20 @@ namespace BlogEngineClone.Areas.Identity.Pages.Account
         private readonly ILogger<LoginModel> _logger;
         private readonly IConfiguration _configuration;
         private readonly UserManager<BlogEngineCloneUser> _usermanager;
+        private readonly IHttpClientFactory _httpClientFactory;
 
 
         public LoginModel(SignInManager<BlogEngineCloneUser> signInManager,
                           ILogger<LoginModel> logger,
                           UserManager<BlogEngineCloneUser> usermanager,
-                          IConfiguration configuration)
+                          IConfiguration configuration,
+                          IHttpClientFactory httpClientFactory)
         {
             _signInManager = signInManager;
             _logger = logger;
             _usermanager = usermanager;
             _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
         }
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -133,34 +138,19 @@ namespace BlogEngineClone.Areas.Identity.Pages.Account
 
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
-           
+            
+
+
             if (ModelState.IsValid)
             {
                 // This doesn't count login failures towards account lockout
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
+                var token = await GetAuthTokenAsync(Input.Email, Input.Password, Input.RememberMe);
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
+
                     _logger.LogInformation("User logged in.");
-
-                    var token = await GetUserInfo();
-
-                    var userobject = JObject.Parse(token);
-
-
-                    var UserID = userobject["userID"].ToString();
-                    var UserName = userobject["userName"].ToString();
-                    var UserEmail = userobject["userEmaail"].ToString();
-                    var UserToken = userobject["userToken"].ToString();
-                    
-
-                    //return new JsonResult(new
-                    //{
-                    //    userID = UserID,
-                    //    userName = UserName,
-                    //    userEmaail = UserEmail,
-                    //    userToken = UserToken
-                    //});
 
                     int x = 1;
 
@@ -189,37 +179,43 @@ namespace BlogEngineClone.Areas.Identity.Pages.Account
             return Page();
         }
 
-        private async Task<string> GetUserInfo()
+        private async Task<string> GetAuthTokenAsync(string email, string password, bool rememberMe)
         {
-            var apiBaseUrl = _configuration["ApiBaseUrl"];
+            var apiEndpoint = "https://localhost:7234/api/User/Login"; // Replace with your API endpoint
 
-            var apiEndPoint = "/api/User/Login";
-
-            var apiFullPath = $"{apiBaseUrl}{apiEndPoint}";
-
-            var inputmodel = this.Input;
-
-            using (var httpClient = new HttpClient())
+            var input = new
             {
-                var content = new StringContent(JsonConvert.SerializeObject(inputmodel), Encoding.UTF8, "application/json");
-                var response = await httpClient.PostAsync(apiFullPath, content);
+                Email = email,
+                Password = password,
+                RememberMe = rememberMe
+            };
+
+            using (var httpClient = _httpClientFactory.CreateClient())
+            {
+                var jsonContent = new StringContent(JsonSerializer.Serialize(input, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                }), Encoding.UTF8, "application/json");
+
+                var response = await httpClient.PostAsync(apiEndpoint, jsonContent);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var tokenResponse = await response.Content.ReadAsStringAsync();
-
-
-                    return tokenResponse;
-
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var token = JsonSerializer.Deserialize<AuthTokenResponse>(responseContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                    });
+                    return token.Token;
                 }
-                else
-                {
-                    // Handle API error
-                    return null;
-                }
+
+                return null;
             }
-
         }
 
+    }
+    public class AuthTokenResponse
+    {
+        public string Token { get; set; }
     }
 }
