@@ -1,9 +1,20 @@
-﻿@page
+﻿@page 
+
+@using Microsoft.AspNetCore.Authentication
+@using System.Security.Claims
+
 @model BlogEngineClone.Areas.Blog.Pages.UserProfileModel
 @{
+    string currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    string targetfollowID = HttpContext.Request.RouteValues["targetUserID"]?.ToString();
+    bool checker = false;
 }
 
 <div>
+    <div>
+        <p>Current User ID: @currentUserId</p>
+        <p>Target User ID: @targetfollowID</p>
+    </div>
     @*
         if followed show unfollow button 
         cai nay la dung api kiem tra file json de co follow hay khong
@@ -11,8 +22,18 @@
         logic thi kiem user trong database
         neu co thi tra r roi kiem trong file json co hay khong
     *@
-    <button id="follow">
-    </button>
+    @if (checker)
+    {
+        <p>
+            Followed
+        </p>
+    }
+    else
+    {
+        <p>
+            UnFollowed
+        </p>
+    }
 
     @*
         duoi day la them chuc nang load cai bai viet cua blogger da dang roi het roi con muon them gi thi tinh sau
@@ -34,6 +55,11 @@
     
     @foreach(var item in Model._context.Users.ToList()){
         <div style="margin-top: 20px">
+            <button id="followButton">
+                <span>
+                    Follow
+                </span>
+            </button>
             <p>@item.name</p>
             <p>@item.Email</p>
             <p>@item.Id</p>
@@ -45,12 +71,18 @@
 
                 </p>
             </button>
+            <button id="checkFollowButton">
+                <span>
+                    test
+                </span>
+            </button>
         </div>
     }
 </div>
 
-
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script>
+
     // LoadFollowButton()
 
     // LoadUser();
@@ -89,7 +121,9 @@
                     // Check if data is defined and contains expected properties
                     if (data && data.hasOwnProperty('userID') && data.hasOwnProperty('userName')) {
                         // Generate HTML string
-                        const htmlString = `<p>Call Successful. User name is: ${data.userName}</p>`;
+                        const htmlString = `<p>User name is: ${data.userName}</p>
+                                <p>User id is: ${data.userID}</p>
+                                <p>User role is: ${data.message}</p>`;
 
                         // Update the HTML content for the specific userDataContainer associated with the clicked button
                         const userDataContainer = this.querySelector('.userDataContainer');
@@ -103,8 +137,72 @@
                 });
         });
     }
-        
 
+
+    function checkFollowed() {
+        $.ajax({
+            type: "POST",
+            url: "/User/FollowBtn/" + "@currentUserId",
+            data: "@targetfollowID",
+            success: function (response) {
+                console.log("Followed status:", response);
+
+                // Assign the response value to the Razor variable
+                @checker = response;
+
+                // Now you can use 'checker' in your Razor code
+                if (checker) {
+                    console.log("User is followed");
+                } else {
+                    console.log("User is not followed");
+                }
+            },
+            error: function (error) {
+                console.error("Error:", error);
+            }
+        });
+    }
+
+    // Attach the function to the button click event
+    $(document).ready(function () {
+        $("#checkFollowButton").click(function () {
+            checkFollowed();
+        });
+    });
+        
+    document.getElementById('followButton').addEventListener('click', function () {
+        // Get user IDs from data attributes
+        const userID = "@currentUserId";
+        const targetID = "@targetfollowID";
+
+        console.log(targetID);
+
+        // Create the request object
+        const request = {
+            UserID: userID,
+            FollowingID: targetID
+        };
+
+        // Send POST request to the API endpoint
+        fetch('/api/User/Follow', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(request),
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Follow successful!');
+                    // You can update the button text or style here if needed
+                } else {
+                    console.error('Follow failed:', response.statusText);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    });
 
     
 </script>

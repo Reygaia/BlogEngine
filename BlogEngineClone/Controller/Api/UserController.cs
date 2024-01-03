@@ -35,7 +35,10 @@ namespace BlogEngineClone.Controller.Api
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly BlogEngineCloneContext _dbcontext;
 
-        private readonly string datafilepath = "FollowData.json";
+        private readonly string followdatafilepath = "..\\BlogEngineClone\\Areas\\Blog\\Pages\\FollowData.json";
+
+        public bool followed;
+
         private Dictionary<string, HashSet<string>> FollowData;
 
         public UserController(ILogger<UserController> logger,
@@ -219,37 +222,37 @@ namespace BlogEngineClone.Controller.Api
 
 
 
-        public async Task<IActionResult> GetUserAsync(string userid)
-        {
-            var apiBaseUrl = _configuration["ApiBaseUrl"];
-            var apiEndPoint = "/api/User/Current";
+        //public async Task<IActionResult> GetUserAsync(string userid)
+        //{
+        //    var apiBaseUrl = _configuration["ApiBaseUrl"];
+        //    var apiEndPoint = "/api/User/Current";
 
-            var httpclient = _httpClientFactory.CreateClient();
+        //    var httpclient = _httpClientFactory.CreateClient();
 
-            var accesstoken = await HttpContext.GetTokenAsync("accesstoken");
-            httpclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accesstoken);
-            Console.WriteLine(accesstoken);
+        //    var accesstoken = await HttpContext.GetTokenAsync("accesstoken");
+        //    httpclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accesstoken);
+        //    Console.WriteLine(accesstoken);
 
 
-            var apiUrl = $"{apiBaseUrl}{apiEndPoint}?userId={userid}";
+        //    var apiUrl = $"{apiBaseUrl}{apiEndPoint}?userId={userid}";
 
-            //var response = await httpclient.GetAsync(apiUrl);
+        //    //var response = await httpclient.GetAsync(apiUrl);
 
-            HttpContent content = new StringContent("123");
+        //    HttpContent content = new StringContent("123");
 
-            var response = await httpclient.PostAsync(apiUrl, content);
+        //    var response = await httpclient.PostAsync(apiUrl, content);
 
-            if (response.IsSuccessStatusCode)
-            {
-                var usertoken = await GetUserAsync(userid);
-                return new JsonResult(new
-                {
-                    Token = usertoken
-                });
-                return RedirectToPage("/Identity/Account/Logout");
-            }
-            return Ok();
-        }
+        //    if (response.IsSuccessStatusCode)
+        //    {
+        //        var usertoken = await GetUserAsync(userid);
+        //        return new JsonResult(new
+        //        {
+        //            Token = usertoken
+        //        });
+        //        return RedirectToPage("/Identity/Account/Logout");
+        //    }
+        //    return Ok();
+        //}
 
         //[HttpGet]
         //[Route("Protected")]
@@ -279,94 +282,126 @@ namespace BlogEngineClone.Controller.Api
 
             var user = list.Where(s => s.Id == idstring).FirstOrDefault();
 
-            //var checker = await _usermanager.IsInRoleAsync(user, "Blogger");
+            var checker = await _usermanager.IsInRoleAsync(user, "Blogger");
 
-            //if (checker)
-            //{
+            if (checker)
+            {
                 return new JsonResult(new
                 {
                     userID = user.Id,
                     userName = user.UserName,
+                    message = "This is a blogger"
                 });
-            //}
+            }
+            else
+            {
+                return new JsonResult(new
+                {
+                    UserID = user.Id,
+                    userName = user.UserName,
+                    message = "This is not a blogger"
+                });
+            }
             return Ok();
         }
 
 
 
+        [HttpPost]
+        [Route("FollowBtn")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public IActionResult CheckFollowed(string userID, [FromBody] string targetID)
+        {
+            var userlist = LoadFollowData().Follow.ToList();
+            var follow = FindOrCreateFollow(userID, userlist);
 
-
-
-
-
+            var isFollowed = follow.FollowingList.Contains(targetID);
+            return Ok(isFollowed);
+        }
 
         [HttpPost]
         [Route("Follow")]
         public IActionResult FollowUser([FromBody] Follow request)
         {
-            if (request == null
-                || string.IsNullOrEmpty(request.UserID)
-                || string.IsNullOrEmpty(request.FollowerID)
-                || string.IsNullOrEmpty(request.FollowerID))
+            var data = LoadFollowData();
+
+            if (IsUnfollowRequest(request))
             {
-                return BadRequest(new { message = "Invalid request" });
+                Unfollow(request.UserID, request.FollowingID, data.Follow);
+            }
+            else
+            {
+                Follow(request.UserID, request.FollowingID, data.Follow);
             }
 
-            if (!FollowData.ContainsKey(request.FollowerID))
-            {
+            SaveData(data);
 
-                FollowData[request.FollowerID] = new HashSet<string>();
-            }
-
-            FollowData[request.FollowerID].Add(request.FollowerID);
-
-            SaveDataToFile();
-
-            return Ok(new
-            {
-                message = $"{request.FollowerID} is now following {request.FollowingID}"
-            });
+            return Ok(IsUnfollowRequest(request) ? "Unfollowed successfully" : "Followed successfully");
         }
-
-        [HttpPost]
-        [Route("Unfollow")]
-        public IActionResult UnFollowUser([FromBody] Follow request)
+        private void Follow(string userId, string targetId, List<Follow> followList)
         {
-            return Ok(new
-            {
-                message = "success"
-            });
+            var userFollow = FindOrCreateFollow(userId, followList);
+            var targetFollow = FindOrCreateFollow(targetId, followList);
+
+            followList.Remove(userFollow);
+            followList.Remove(targetFollow);
+
+            userFollow.FollowingID = targetId;
+            userFollow.FollowingList.Add(targetId);
+
+            targetFollow.FollowerID = userId;
+            targetFollow.FollowerList.Add(userId);
+
+            followList.Add(userFollow);
+            followList.Add(targetFollow);
         }
+        private void Unfollow(string userId, string targetId, List<Follow> followList)
+        {
+            var userFollow = FindOrCreateFollow(userId, followList);
+            var targetFollow = FindOrCreateFollow(targetId, followList);
 
+            followList.Remove(userFollow);
+            followList.Remove(targetFollow);
 
-        private void LoadDataFromFile()
+            userFollow.FollowingList.Remove(targetId);
+            targetFollow.FollowerList.Remove(userId);
+
+            followList.Add(userFollow);
+            followList.Add(targetFollow);
+        }
+        private Follow FindOrCreateFollow(string userId, List<Follow> followList)
+        {
+            return followList.FirstOrDefault(f => f.UserID == userId) ?? new Follow { UserID = userId };
+        }
+        private bool IsUnfollowRequest(Follow request)
+        {
+            // Check if either FollowingID or FollowerID is null or empty
+            return string.IsNullOrEmpty(request.FollowingID) || string.IsNullOrEmpty(request.FollowerID);
+        }
+        private FollowContainer LoadFollowData()
+        {
+            string jsondata = System.IO.File.ReadAllText(followdatafilepath);
+            var Followdatajson = JsonConvert.DeserializeObject<FollowContainer>(jsondata);
+            return Followdatajson;
+        }
+        private void SaveData(FollowContainer data)
         {
             try
             {
-                if (System.IO.File.Exists(datafilepath))
-                {
-                    string jsondata = System.IO.File.ReadAllText(datafilepath);
-                    FollowData = JsonConvert.DeserializeObject<Dictionary<string, HashSet<string>>>(jsondata);
-                }
-                else
-                {
-                    FollowData = new Dictionary<string, HashSet<string>>();
-                }
+                var savedata = JsonConvert.SerializeObject(data);
+                System.IO.File.WriteAllText(followdatafilepath, savedata);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error loading data from file:{ex.Message}");
-                FollowData = new Dictionary<string, HashSet<string>>();
+                Console.WriteLine($"Error saving to file: {ex.Message}");
             }
         }
-
-
         private void SaveDataToFile()
         {
             try
             {
                 string jsondata = JsonConvert.SerializeObject(FollowData, Formatting.Indented);
-                System.IO.File.WriteAllText(datafilepath, jsondata);
+                System.IO.File.WriteAllText(followdatafilepath, jsondata);
             }
             catch (Exception ex)
             {
@@ -374,7 +409,56 @@ namespace BlogEngineClone.Controller.Api
             }
         }
 
-        
+
+        //[HttpPost]
+        //[Route("Json")]
+        //public IActionResult CheckFollow([FromBody] Follow Followdata)
+        //{
+        //    try
+        //    {
+        //        if (System.IO.File.Exists(followdatafilepath))
+        //        {
+        //            string Listjsondata = System.IO.File.ReadAllText(followdatafilepath);
+
+        //            var followDataJson = JsonConvert.SerializeObject(Followdata);
+
+        //            var listfollowjson = JsonConvert.DeserializeObject<FollowContainer>(Listjsondata);
+
+        //            var listfollow = listfollowjson.Follow;
+
+        //            var checker = listfollow.Where(s => s.UserID == Followdata.UserID).FirstOrDefault();
+
+        //            if (checker!=null)
+        //            {
+        //                listfollowjson.Follow.Remove(checker);
+        //                checker = Followdata;
+        //                listfollowjson.Follow.Add(checker);
+        //            }
+
+
+        //            var savedata = JsonConvert.SerializeObject(listfollowjson);
+
+        //            System.IO.File.WriteAllText(followdatafilepath, savedata);
+
+        //            return new JsonResult(new
+        //            {
+        //                UserID = Followdata.UserID,
+        //                FollowerID = Followdata.FollowerList,
+        //                FollowingID = Followdata.FollowingList,
+        //            });
+
+        //        }
+        //        else
+        //        {
+        //            return BadRequest("Not Readable");
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+
+        //    }
+        //    return BadRequest("File not Exist");
+        //}
 
 
 

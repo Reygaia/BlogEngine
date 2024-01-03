@@ -1,0 +1,58 @@
+{
+  "Follow": [
+    {
+      "UserID": "123",
+      "FollowerID": "[\"follower1\",\"follower2\"]",
+      "FollowingID": "[\"following1\",\"following2\"]",
+      "FollowerList": [ "follower1", "follower2" ],
+      "FollowingList": [ "following1", "following2" ],
+      "Follower": null,
+      "Following": null
+    },
+    {
+      "UserID": "456",
+      "FollowerID": "[\"follower3\",\"follower3\"]",
+      "FollowingID": "[\"following5\",\"following4\"]",
+      "FollowerList": [ "follower3", "follower3" ],
+      "FollowingList": [ "following5", "following4" ],
+      "Follower": null,
+      "Following": null
+    },
+    {
+      "UserID": "789",
+      "FollowerID": "[\"follower3\",\"follower3\"]",
+      "FollowingID": "[\"following5\",\"following4\"]",
+      "FollowerList": [ "follower3", "follower3" ],
+      "FollowingList": [ "following5", "following4" ],
+      "Follower": null,
+      "Following": null
+    },
+    {
+      "UserID": "1234",
+      "FollowerID": "[\"follower3\",\"follower3\"]",
+      "FollowingID": null,
+      "FollowerList": [ "follower3", "follower3" ],
+      "FollowingList": [],
+      "Follower": null,
+      "Following": null
+    },
+    {
+      "UserID": "12354",
+      "FollowerID": null,
+      "FollowingID": "[\"following5\",\"following4\"]",
+      "FollowerList": [],
+      "FollowingList": [ "following5", "following4" ],
+      "Follower": null,
+      "Following": null
+    },
+    {
+      "UserID": "456789",
+      "FollowerID": "[\"Follwer1\"]",
+      "FollowingID": "[\"following5\",\"following4\",\"following8\"]",
+      "FollowerList": [ "Follwer1" ],
+      "FollowingList": [ "following5", "following4", "following8" ],
+      "Follower": null,
+      "Following": null
+    }
+  ]
+}

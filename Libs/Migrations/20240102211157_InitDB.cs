@@ -98,8 +98,8 @@ namespace Libs.Migrations
                 name: "AspNetUserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
-                    ProviderKey = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
@@ -143,8 +143,8 @@ namespace Libs.Migrations
                 columns: table => new
                 {
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    LoginProvider = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
@@ -175,31 +175,6 @@ namespace Libs.Migrations
                         column: x => x.UserID,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Follow",
-                columns: table => new
-                {
-                    UserID = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    FollowerID = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    FollowingID = table.Column<string>(type: "nvarchar(450)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Follow", x => x.UserID);
-                    table.ForeignKey(
-                        name: "FK_Follow_AspNetUsers_FollowerID",
-                        column: x => x.FollowerID,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Follow_AspNetUsers_FollowingID",
-                        column: x => x.FollowingID,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -355,16 +330,6 @@ namespace Libs.Migrations
                 column: "UserID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Follow_FollowerID",
-                table: "Follow",
-                column: "FollowerID");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Follow_FollowingID",
-                table: "Follow",
-                column: "FollowingID");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Notification_UserEntityId",
                 table: "Notification",
                 column: "UserEntityId");
@@ -405,9 +370,6 @@ namespace Libs.Migrations
 
             migrationBuilder.DropTable(
                 name: "CommentDetail");
-
-            migrationBuilder.DropTable(
-                name: "Follow");
 
             migrationBuilder.DropTable(
                 name: "Notification");
