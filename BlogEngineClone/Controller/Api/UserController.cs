@@ -36,7 +36,7 @@ namespace BlogEngineClone.Controller.Api
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly BlogEngineCloneContext _dbcontext;
 
-        private readonly string datafilepath = "FollowData.json";
+        private readonly string followdatafilepath = "..\\BlogEngineClone\\Areas\\Blog\\Pages\\FollowData.json";
         private Dictionary<string, HashSet<string>> FollowData;
 
         public UserController(ILogger<UserController> logger,
@@ -440,7 +440,7 @@ namespace BlogEngineClone.Controller.Api
             try
             {
                 string jsondata = JsonConvert.SerializeObject(FollowData, Formatting.Indented);
-                System.IO.File.WriteAllText(datafilepath, jsondata);
+                System.IO.File.WriteAllText(followdatafilepath, jsondata);
             }
             catch (Exception ex)
             {
