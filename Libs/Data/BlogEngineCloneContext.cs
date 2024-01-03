@@ -16,7 +16,6 @@ public class BlogEngineCloneContext : IdentityDbContext<BlogEngineCloneUser>
 
     public DbSet<Post> Post { get; set; }
     public DbSet<Comment> Comment { get; set; }
-    public DbSet<Follow> Follow { get; set; }
     public DbSet<Notification> Notification { get; set; }
     public DbSet<CommentDetail> CommentDetail { get; set; }
     public DbSet<PostDetail> PostDetail { get; set; }
@@ -41,16 +40,5 @@ public class BlogEngineCloneContext : IdentityDbContext<BlogEngineCloneUser>
             .OnDelete(DeleteBehavior.NoAction);
 
 
-        builder.Entity<Follow>()
-            .HasOne(f => f.Follower)
-            .WithMany(u => u.Followers)
-            .HasForeignKey(f => f.FollowerID)
-            .OnDelete(DeleteBehavior.Restrict); // You may adjust the delete behavior based on your requirements
-
-        builder.Entity<Follow>()
-            .HasOne(f => f.Following)
-            .WithMany(u => u.Following)
-            .HasForeignKey(f => f.FollowingID)
-            .OnDelete(DeleteBehavior.Restrict); // You may adjust the delete behavior based on your requirements
     }
 }

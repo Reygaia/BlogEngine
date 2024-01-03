@@ -1,5 +1,6 @@
 ﻿@page
 @model BlogEngineClone.Areas.Blog.Pages.UserProfileModel
+@using System.Security.Claims
 @{
     string currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
     string targetfollowID = "053d0db9-1928-4f99-8ec8-ee4f7b3c0abf";
