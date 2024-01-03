@@ -1,0 +1,11 @@
+{
+  "Follow": [
+    {
+      "UserID": "Follow1",
+      "FollowList": {
+        "FollowingList": [ "Follow2", "Follow3", "Follow4", "Follow5" ],
+        "FollowerList": []
+      }
+    }
+  ]
+}

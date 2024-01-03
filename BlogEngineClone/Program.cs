@@ -52,7 +52,7 @@ builder.Services.AddMvc();
 Microsoft.Extensions.Configuration.ConfigurationManager configuration = builder.Configuration;
 
 builder.Services.AddAuthentication(options =>{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    //options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>

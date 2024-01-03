@@ -16,7 +16,6 @@ public class BlogEngineCloneUser : IdentityUser
     public string name { get; set; }
     public virtual List<Post>? Post { get; set; }
     public virtual List<Comment>? Comment { get; set; }
-    public virtual List<Follow> Followers { get; set; }
-    public virtual List<Follow> Following { get; set; }
+
 }
 

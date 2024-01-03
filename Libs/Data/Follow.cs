@@ -1,4 +1,5 @@
 ﻿using BlogEngineClone.Areas.Identity.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -19,9 +20,11 @@ namespace Libs.Entity
         public string UserID { get; set; }
         public string TargetID { get; set; }
     }
+    [Keyless]
     public class Follow
     {
         public string UserID { get; set; }
+        [NotMapped]
         public FollowList? FollowList { get; set; } = new FollowList();
         // Navigation properties
         public Follow(string userId)
@@ -29,6 +32,11 @@ namespace Libs.Entity
             UserID = userId;
             FollowList = new FollowList();
         }
+        public Follow()
+        {
+
+        }
+
 
     }
     public class FollowList

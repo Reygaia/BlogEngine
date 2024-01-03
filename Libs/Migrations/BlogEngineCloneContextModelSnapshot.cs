@@ -144,28 +144,6 @@ namespace Libs.Migrations
                     b.ToTable("CommentDetail");
                 });
 
-            modelBuilder.Entity("Libs.Entity.Follow", b =>
-                {
-                    b.Property<string>("UserID")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("FollowerID")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("FollowingID")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("UserID");
-
-                    b.HasIndex("FollowerID");
-
-                    b.HasIndex("FollowingID");
-
-                    b.ToTable("Follow");
-                });
-
             modelBuilder.Entity("Libs.Entity.Notification", b =>
                 {
                     b.Property<string>("NotiID")
@@ -312,12 +290,10 @@ namespace Libs.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProviderKey")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("nvarchar(max)");
@@ -354,12 +330,10 @@ namespace Libs.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("LoginProvider")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Value")
                         .HasColumnType("nvarchar(max)");
@@ -405,25 +379,6 @@ namespace Libs.Migrations
                     b.Navigation("Post");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Libs.Entity.Follow", b =>
-                {
-                    b.HasOne("BlogEngineClone.Areas.Identity.Data.BlogEngineCloneUser", "Follower")
-                        .WithMany("Followers")
-                        .HasForeignKey("FollowerID")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BlogEngineClone.Areas.Identity.Data.BlogEngineCloneUser", "Following")
-                        .WithMany("Following")
-                        .HasForeignKey("FollowingID")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Follower");
-
-                    b.Navigation("Following");
                 });
 
             modelBuilder.Entity("Libs.Entity.Notification", b =>
@@ -519,10 +474,6 @@ namespace Libs.Migrations
             modelBuilder.Entity("BlogEngineClone.Areas.Identity.Data.BlogEngineCloneUser", b =>
                 {
                     b.Navigation("Comment");
-
-                    b.Navigation("Followers");
-
-                    b.Navigation("Following");
 
                     b.Navigation("Post");
                 });
