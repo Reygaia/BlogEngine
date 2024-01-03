@@ -20,6 +20,7 @@ using Newtonsoft.Json.Linq;
 using Azure.Identity;
 using BlogEngineClone.Data;
 using Microsoft.Identity.Client;
+using Azure.Core;
 
 namespace BlogEngineClone.Controller.Api
 {
@@ -44,7 +45,7 @@ namespace BlogEngineClone.Controller.Api
                               UserManager<BlogEngineCloneUser> usermanager,
                               IConfiguration configuration,
                               IHttpClientFactory httpClientFactory,
-                              BlogEngineCloneContext blogEngineCloneContext) 
+                              BlogEngineCloneContext blogEngineCloneContext)
         {
             _logger = logger;
             _signInManager = signinmanager;
@@ -104,13 +105,13 @@ namespace BlogEngineClone.Controller.Api
             BlogEngineCloneUser usertest = new BlogEngineCloneUser();
 
             var result = AuthenticateToken(usertest);
-            
+
             var user = await _usermanager.FindByEmailAsync(Request.Email);
 
-            if(!string.IsNullOrEmpty(result))
+            if (!string.IsNullOrEmpty(result))
             {
                 var UserResponse = new { UserID = user.Id, UserName = user.name, Token = result };
-                
+
                 var jsonUser = JsonConvert.SerializeObject(UserResponse);
 
                 return new JsonResult(UserResponse);
@@ -119,12 +120,12 @@ namespace BlogEngineClone.Controller.Api
             int x = 1;
 
             return Ok();
-            
+
         }
         private string AuthenticateToken(BlogEngineCloneUser user)
         {
 
-            if(user != null)
+            if (user != null)
             {
                 var claims = GetClaims(user.Id);
 
@@ -139,7 +140,7 @@ namespace BlogEngineClone.Controller.Api
 
 
 
-                
+
             //    var jsonObject = JObject.Parse(userToken);
 
             //    var TokenResult = jsonObject["Value"]?.ToString();
@@ -152,17 +153,17 @@ namespace BlogEngineClone.Controller.Api
 
         private List<Claim> GetClaims(string userid)
         {
-           var userclaim =  _usermanager.FindByIdAsync(userid).Result;
+            var userclaim = _usermanager.FindByIdAsync(userid).Result;
 
-           if(userclaim!=null)
-           {
-                var claims =  _usermanager.GetClaimsAsync(userclaim).Result;
-                
+            if (userclaim != null)
+            {
+                var claims = _usermanager.GetClaimsAsync(userclaim).Result;
+
                 var listclaim = claims.ToList();
 
                 return listclaim;
-           }
-           return new List<Claim>();
+            }
+            return new List<Claim>();
         }
 
 
@@ -271,7 +272,7 @@ namespace BlogEngineClone.Controller.Api
         [Route("LoadUser/{userID}")]
         public async Task<IActionResult> LoadUserWall([FromBody] string WallID)
         {
-            var context =  _contextAccessor.HttpContext.User.Identity;
+            var context = _contextAccessor.HttpContext.User.Identity;
 
             var idstring = Convert.ToString(WallID);
 
@@ -294,7 +295,21 @@ namespace BlogEngineClone.Controller.Api
 
 
 
+        [HttpPost]
+        [Route("FollowBtn/{TargetID}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public IActionResult CheckFollowed([FromBody] FollowRequest Request)
+        {
+            var listFollow = LoadFollowData();
+            var user = FindOrCreateFollow(Request, listFollow);
 
+            var message1 = HasFollowed(Request, user) ? "Unfollowed" : "Followed";
+
+            return Ok(new
+            {
+                message = message1
+            });
+        }
 
 
 
@@ -302,56 +317,115 @@ namespace BlogEngineClone.Controller.Api
 
         [HttpPost]
         [Route("Follow")]
-        public IActionResult FollowUser([FromBody] Follow request)
+        public IActionResult FollowUser([FromBody] FollowRequest request)
         {
-            if (request == null
-                || string.IsNullOrEmpty(request.UserID)
-                || string.IsNullOrEmpty(request.FollowerID)
-                || string.IsNullOrEmpty(request.FollowerID))
+            var listFollow = LoadFollowData();
+            var user = FindOrCreateFollow(request, listFollow);
+
+            if (user != null)
             {
-                return BadRequest(new { message = "Invalid request" });
-            }
-
-            if (!FollowData.ContainsKey(request.FollowerID))
-            {
-
-                FollowData[request.FollowerID] = new HashSet<string>();
-            }
-
-            FollowData[request.FollowerID].Add(request.FollowerID);
-
-            SaveDataToFile();
-
-            return Ok(new
-            {
-                message = $"{request.FollowerID} is now following {request.FollowingID}"
-            });
-        }
-
-        [HttpPost]
-        [Route("Unfollow")]
-        public IActionResult UnFollowUser([FromBody] Follow request)
-        {
-            return Ok(new
-            {
-                message = "success"
-            });
-        }
-
-
-        private void LoadDataFromFile()
-        {
-            try
-            {
-                if (System.IO.File.Exists(datafilepath))
+                if (HasFollowed(request,user))
                 {
-                    string jsondata = System.IO.File.ReadAllText(datafilepath);
-                    FollowData = JsonConvert.DeserializeObject<Dictionary<string, HashSet<string>>>(jsondata);
+                    user.FollowList.FollowingList.Add(request.TargetID);
+
+                    // Add the user to the target user's follower list
+                    var targetUser = listFollow.Follow.FirstOrDefault(s => s.UserID == request.TargetID);
+                    targetUser?.FollowList.FollowerList.Add(request.UserID);
                 }
                 else
                 {
-                    FollowData = new Dictionary<string, HashSet<string>>();
+                    user.FollowList.FollowingList.Remove(request.TargetID);
+
+                    // Remove the user from the target user's follower list
+                    var targetUser = listFollow.Follow.FirstOrDefault(s => s.UserID == request.TargetID);
+                    targetUser?.FollowList.FollowerList.Remove(request.UserID);
                 }
+
+                SaveData(listFollow);
+
+                var successMessage = HasFollowed(request, user) ? "Unfollowed successfully": "Followed successfully";
+                return Ok(successMessage);
+            }
+
+            return BadRequest("User not found");
+        }
+        private void Follow(FollowRequest Request, FollowContainer listFollow)
+        {
+            var user = FindOrCreateFollow(Request, listFollow);
+
+            if (user != null)
+            {
+                user.FollowList.FollowingList.Add(Request.TargetID);
+
+                // Add the user to the target user's follower list
+                var targetUser = listFollow.Follow.FirstOrDefault(s => s.UserID == Request.TargetID);
+                targetUser?.FollowList.FollowerList.Add(Request.UserID);
+            }
+
+            SaveData(listFollow);
+        }
+        private void Unfollow(FollowRequest Request, FollowContainer listFollow)
+        {
+            var user = FindOrCreateFollow(Request,listFollow);
+
+            if (user != null)
+            {
+                user.FollowList.FollowingList.Remove(Request.TargetID);
+
+                // Remove the user from the follower's list
+                var targetUser = listFollow.Follow.FirstOrDefault(s => s.UserID == Request.TargetID);
+                targetUser?.FollowList.FollowerList.Remove(Request.UserID);
+            }
+
+            SaveData(listFollow);
+        }
+        private Follow FindOrCreateFollow(FollowRequest Request,FollowContainer listFollow)
+        {
+            var user = listFollow.Follow.FirstOrDefault(s => s.UserID == Request.UserID);
+
+            if (user == null)
+            {
+                user = new Follow(Request.UserID);
+                listFollow.Follow.Add(user);
+            }
+
+            return user;
+        }
+        private bool HasFollowed(FollowRequest Request, Follow User)
+        {
+            var Following = User.FollowList.FollowingList.Where(s => s.Contains(Request.TargetID)).FirstOrDefault();
+            // Check if either FollowingID or FollowerID is null or empty
+            return string.IsNullOrEmpty(Following);
+        }
+        private FollowContainer LoadFollowData()
+        {
+            if (System.IO.File.Exists(followdatafilepath))
+            {
+                string jsondata = System.IO.File.ReadAllText(followdatafilepath);
+
+                if (!string.IsNullOrEmpty(jsondata))
+                {
+                    var Followdatajson = JsonConvert.DeserializeObject<FollowContainer>(jsondata);
+                    return Followdatajson;
+                }
+            }   
+
+            // Create a new FollowContainer if the file doesn't exist or is empty
+            var newFollowData = new FollowContainer
+            {
+                Follow = new List<Follow>()
+            };
+
+            SaveData(newFollowData); // Save the new FollowContainer to the file
+
+            return newFollowData;
+        }
+        private void SaveData(FollowContainer data)
+        {
+            try
+            {
+                var savedata = JsonConvert.SerializeObject(data);
+                System.IO.File.WriteAllText(followdatafilepath, savedata);
             }
             catch (Exception ex)
             {

@@ -1,6 +1,10 @@
 ﻿@page
 @model BlogEngineClone.Areas.Blog.Pages.UserProfileModel
 @{
+    string currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    string targetfollowID = "053d0db9-1928-4f99-8ec8-ee4f7b3c0abf";
+    // string targetfollowID = HttpContext.Request.RouteValues["targetUserID"]?.ToString();
+    bool checker = false;
 }
 
 <div>
@@ -103,8 +107,74 @@
                 });
         });
     }
-        
 
+
+    function toggleFollow() {
+        var userId = "user1"; // Replace with the actual user ID
+        var targetId = "user2"; // Replace with the actual target user ID
+
+        // Make an AJAX request to the server
+        $.ajax({
+            type: 'POST',
+            url: '/FollowBtn/' + targetId,
+            contentType: 'application/json',
+            data: JSON.stringify({ UserID: userId, TargetID: targetId }),
+            headers: {
+                'Authorization': 'Bearer ' + getAccessToken() // Include the JWT token
+            },
+            success: function (data) {
+                alert(data.message); // Show the result in an alert (you can customize this part)
+            },
+            error: function (error) {
+                console.log(error);
+            }
+        });
+    }
+
+    function getAccessToken() {
+        // Assume the token is stored in a cookie named 'access_token'
+        return getCookie('access_token');
+    }
+
+    function getCookie(name) {
+        const value = "; " + document.cookie;
+        const parts = value.split("; " + name + "=");
+        if (parts.length === 2) return parts.pop().split(";").shift();
+    }
+        
+    document.getElementById('followButton').addEventListener('click', function () {
+        // Get user IDs from data attributes
+        const userID = "@currentUserId";
+        const targetID = "@targetfollowID";
+
+        console.log(targetID);
+
+        // Create the request object
+        const request = {
+            UserID: userID,
+            TargetID: targetID
+        };
+
+        // Send POST request to the API endpoint
+        fetch('/api/User/Follow', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(request),
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Follow successful!');
+                    // You can update the button text or style here if needed
+                } else {
+                    console.error('Follow failed:', response.statusText);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    });
 
     
 </script>

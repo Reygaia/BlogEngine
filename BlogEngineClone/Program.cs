@@ -51,7 +51,10 @@ builder.Services.AddMvc();
 
 Microsoft.Extensions.Configuration.ConfigurationManager configuration = builder.Configuration;
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication(options =>{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
 .AddJwtBearer(options =>
 {
     options.SaveToken = true;
