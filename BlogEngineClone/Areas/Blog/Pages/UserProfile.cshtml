@@ -39,7 +39,11 @@
     
     @foreach(var item in Model._context.Users.ToList()){
         <div style="margin-top: 20px">
-
+            <button id="followButton">
+                <span>
+                    Follow
+                </span>
+            </button>
             <p>@item.name</p>
             <p>@item.Email</p>
             <p>@item.Id</p>

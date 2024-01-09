@@ -126,7 +126,7 @@ using (var scope = app.Services.CreateScope())
             };
 
         // Create a ClaimsIdentity
-        var identity = new ClaimsIdentity(claims, "custom", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
+        var identity = new ClaimsIdentity(claims, "Custom", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
 
         // Optionally, create a ClaimsPrincipal
         var principal = new ClaimsPrincipal(identity);
@@ -161,7 +161,7 @@ using (var scope = app.Services.CreateScope())
         };
 
         // Create a ClaimsIdentity
-        var identity = new ClaimsIdentity(claims, "Cookies", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
+        var identity = new ClaimsIdentity(claims, "Custom", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
 
         // Optionally, create a ClaimsPrincipal
         var principal = new ClaimsPrincipal(identity);
@@ -171,15 +171,15 @@ using (var scope = app.Services.CreateScope())
     }
 
     //user
-    string Useremail1 = "User1@gmail.com";
-    string Userpassword1 = "User1123";
+    string Useremail1 = "User@gmail.com";
+    string Userpassword1 = "user123";
 
     if (await usermanager.FindByEmailAsync(Useremail1) == null)
     {
         var user = new BlogEngineCloneUser();
         user.Email = Useremail1;
-        user.UserName = Userpassword1;
-        user.name = "User";
+        user.UserName = Useremail1;
+        user.name = "User1";
 
 
         await usermanager.CreateAsync(user, Userpassword1);
@@ -189,19 +189,53 @@ using (var scope = app.Services.CreateScope())
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // Using the user ID as the NameIdentifier claim
-            new Claim(ClaimTypes.Name, "User"), // Example: User name
+            new Claim(ClaimTypes.Name, "User1"), // Example: User name
             new Claim(ClaimTypes.Email, "User@gmail.com"), // Example: User email
             new Claim(ClaimTypes.Role,"User")
         };
 
         // Create a ClaimsIdentity
-        var identity = new ClaimsIdentity(claims, "Cookies", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
+        var identity = new ClaimsIdentity(claims, "Custom", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
 
         // Optionally, create a ClaimsPrincipal
         var principal = new ClaimsPrincipal(identity);
         await usermanager.AddClaimsAsync(user, claims);
 
     }
+
+
+    string Useremail2 = "User2@gmail.com";
+    string Userpassword2 = "user123";
+
+    if (await usermanager.FindByEmailAsync(Useremail2) == null)
+    {
+        var user = new BlogEngineCloneUser();
+        user.Email = Useremail2;
+        user.UserName = Useremail2;
+        user.name = "User2";
+
+
+        await usermanager.CreateAsync(user, Userpassword2);
+
+        await usermanager.AddToRoleAsync(user, "User");
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // Using the user ID as the NameIdentifier claim
+            new Claim(ClaimTypes.Name, "User2"), // Example: User name
+            new Claim(ClaimTypes.Email, "User2@gmail.com"), // Example: User email
+            new Claim(ClaimTypes.Role,"User")
+        };
+
+        // Create a ClaimsIdentity
+        var identity = new ClaimsIdentity(claims, "Custom", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
+
+        // Optionally, create a ClaimsPrincipal
+        var principal = new ClaimsPrincipal(identity);
+        await usermanager.AddClaimsAsync(user, claims);
+
+    }
+
 }
 
 

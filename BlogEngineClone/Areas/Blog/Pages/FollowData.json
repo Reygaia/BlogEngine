@@ -4,6 +4,62 @@
       "UserID": "Follow1",
       "FollowList": {
         "FollowingList": [ "Follow2", "Follow3", "Follow4", "Follow5" ],
+        "FollowerList": [ "Follow5", "Follow2", "Follow3" ]
+      }
+    },
+    {
+      "UserID": "Follow5",
+      "FollowList": {
+        "FollowingList": [ "Follow1" ],
+        "FollowerList": []
+      }
+    },
+    {
+      "UserID": "Follow2",
+      "FollowList": {
+        "FollowingList": [ "Follow1" ],
+        "FollowerList": []
+      }
+    },
+    {
+      "UserID": "Follow3",
+      "FollowList": {
+        "FollowingList": [ "Follow1" ],
+        "FollowerList": []
+      }
+    },
+    {
+      "UserID": "cdb9e3fd-eb57-47eb-af13-3a7d3c538f9a",
+      "FollowList": {
+        "FollowingList": [ "053d0db9-1928-4f99-8ec8-ee4f7b3c0abf" ],
+        "FollowerList": []
+      }
+    },
+    {
+      "UserID": "e0a5562d-da5f-4b9e-ac7d-c877eee5a60f",
+      "FollowList": {
+        "FollowingList": [ "053d0db9-1928-4f99-8ec8-ee4f7b3c0abf" ],
+        "FollowerList": []
+      }
+    },
+    {
+      "UserID": "a102300d-b334-4b44-ae2d-fcfaf06d87d4",
+      "FollowList": {
+        "FollowingList": [ "053d0db9-1928-4f99-8ec8-ee4f7b3c0abf" ],
+        "FollowerList": []
+      }
+    },
+    {
+      "UserID": "b3603e17-5d65-4e70-8cf6-212407e30051",
+      "FollowList": {
+        "FollowingList": [ "053d0db9-1928-4f99-8ec8-ee4f7b3c0abf" ],
+        "FollowerList": []
+      }
+    },
+    {
+      "UserID": "e5fbdc39-4d32-4765-b616-4434b1fef365",
+      "FollowList": {
+        "FollowingList": [ "053d0db9-1928-4f99-8ec8-ee4f7b3c0abf" ],
         "FollowerList": []
       }
     }

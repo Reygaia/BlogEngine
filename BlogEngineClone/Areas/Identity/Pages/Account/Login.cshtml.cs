@@ -28,6 +28,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace BlogEngineClone.Areas.Identity.Pages.Account
 {
@@ -145,8 +146,9 @@ namespace BlogEngineClone.Areas.Identity.Pages.Account
             {
                 // This doesn't count login failures towards account lockout
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-                var token = await GetAuthTokenAsync(Input.Email, Input.Password, Input.RememberMe);
+                //var token = await GetAuthTokenAsync(Input.Email, Input.Password, Input.RememberMe);
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+                Console.WriteLine(result);
                 if (result.Succeeded)
                 {
 
@@ -192,7 +194,7 @@ namespace BlogEngineClone.Areas.Identity.Pages.Account
 
             using (var httpClient = _httpClientFactory.CreateClient())
             {
-                var jsonContent = new StringContent(JsonSerializer.Serialize(input, new JsonSerializerOptions
+                var jsonContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(input, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true,
                 }), Encoding.UTF8, "application/json");
@@ -202,7 +204,8 @@ namespace BlogEngineClone.Areas.Identity.Pages.Account
                 if (response.IsSuccessStatusCode)
                 {
                     var responseContent = await response.Content.ReadAsStringAsync();
-                    var token = JsonSerializer.Deserialize<AuthTokenResponse>(responseContent, new JsonSerializerOptions
+                    //return JsonSerializer.
+                    var token = System.Text.Json.JsonSerializer.Deserialize<AuthTokenResponse>(responseContent, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true,
                     });
